@@ -1,0 +1,97 @@
+import sys
+import numpy as np
+import matplotlib.pyplot as plt
+
+def get_filename(required_data):
+    if required_data == 'test_data':
+        return "farmers1.txt"
+    elif required_data == 'ideal_data':
+        return "farmer.TXT"
+    else:
+        sys.exit("Input request invalid: Please check the input for file name fetcher function call")
+
+
+def get_plot_data(filename):
+    # Load data from text file
+    rawData = np.loadtxt(filename)
+
+    # Remove erroneous scans from raw data
+    rawData[rawData < 0] = 0
+
+    # Find indices of '9999' delimiter in text file, indicating end of z-height scan
+    indices = np.where(rawData == 9999)[0]
+
+    # Arrange into matrix, where each row corresponds to one z-height
+    r = [rawData[0:indices[0]]]
+    for i in range(1, len(indices)):
+        r.append(rawData[indices[i-1] + 1:indices[i]])
+
+    r = np.array(r)
+
+    # Delete last row of 9999 delimiters
+    r = r[:, :-1]
+
+    # Offset scan so that distance is with respect to turntable center of rotation
+    centerDistance = 10.3  # Distance from scanner to center of turntable
+    r = centerDistance - r
+
+    # Remove scan values greater than maxDistance and less than minDistance
+    maxDistance = 20
+    minDistance = 0
+    r[(r > maxDistance) | (r < minDistance)] = np.nan
+
+    # Remove scan values around 0
+    midThreshUpper = 0.5
+    midThreshLower = -midThreshUpper
+    midThreshIdx = (r > midThreshLower) & (r < midThreshUpper)
+    r[midThreshIdx] = np.nan
+
+    # Create theta matrix with the same size as r -- each column in r corresponds to specific orientation
+    theta = np.linspace(360, 0, r.shape[1], endpoint=False)
+    theta = np.radians(theta)
+    theta = np.tile(theta, (r.shape[0], 1))
+
+    # Create z-height array where each row corresponds to one z-height
+    zDelta = 0.1
+    z = np.arange(0, r.shape[0] * zDelta, zDelta)
+    z = np.tile(z, (r.shape[1], 1)).T
+
+    # Convert to cartesian coordinates
+    x, y, z = np.cos(theta) * r, np.sin(theta) * r, z
+    
+    return x, y, z
+
+
+def main():
+    # Get name of the files of which the defect is going to be tested upon
+    ideal_data_filename = get_filename("ideal_data")
+    test_data_filename = get_filename("test_data")
+
+    # Fetching coordinates of test and ideal data
+    x_ideal, y_ideal, z_ideal = get_plot_data(ideal_data_filename)
+    x_test, y_test, z_test = get_plot_data(test_data_filename)
+
+    # Plotting the point cloud of ideal object so that user can identify separately
+    fig = plt.figure("Ideal Object")
+    plt.title("Ideal Object")
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(x_ideal, y_ideal, z_ideal, c='b', marker='.')
+
+    # Plotting the point cloud of test object so that user can identify separately
+    fig = plt.figure()
+    plt.title("Test Object")
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(x_test, y_test, z_test, c='r', marker='.')
+
+    # Comparing both the point clouds
+    fig = plt.figure()
+    plt.title("Ideal Object vs Test Object")
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(x_ideal, y_ideal, z_ideal, c='b', marker='.')
+    ax.scatter(x_test, y_test, z_test, c='r', marker='.')
+
+    # Plotting all 3 in different windows
+    plt.show()
+    
+if __name__ == "__main__":
+    main()
