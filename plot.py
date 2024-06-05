@@ -58,9 +58,29 @@ def get_plot_data(filename):
 
     # Convert to cartesian coordinates
     x, y, z = np.cos(theta) * r, np.sin(theta) * r, z
-    
+
     return x, y, z
 
+
+def align_pos(x_ideal, y_ideal, z_ideal, x_test, y_test, z_test, error_rate):
+    # Calculate the number of rows to add
+    num_rows_to_add = z_ideal.shape[0] - z_test.shape[0]
+    
+    # Allowing 30% error for checking as it is going to handle small objects
+    limiting_number = round(num_rows_to_add * error_rate) if round(num_rows_to_add * error_rate) >= 1 else 1
+
+    # Extract the last `num_rows_to_add` rows from z_ideal
+    z_errored = z_ideal[-num_rows_to_add:, :]
+
+    # Create rows of NaNs for x and y with the same shape as the added rows in z_test
+    nan_row = np.full_like(x_test[0], np.nan)  # Create a row of NaNs with the same shape as a single row in x_test
+    nan_matrix = np.tile(nan_row, (num_rows_to_add, 1))  # Create a matrix of NaNs with the same number of rows as added in z_test
+
+    # Append NaN rows to x_test and y_test
+    x_test_view = np.vstack((x_test, nan_matrix))
+    y_test_view = np.vstack((y_test, nan_matrix))
+    
+    return x_test_view, y_test_view, z_errored, limiting_number
 
 def main():
     # Get name of the files of which the defect is going to be tested upon
@@ -70,6 +90,28 @@ def main():
     # Fetching coordinates of test and ideal data
     x_ideal, y_ideal, z_ideal = get_plot_data(ideal_data_filename)
     x_test, y_test, z_test = get_plot_data(test_data_filename)
+    
+    x_errored = []
+    y_errored = []
+
+    if z_ideal.shape[0] > z_test.shape[0]:
+        # Align the shapes of Test Object and the Ideal Object
+        x_test_view, y_test_view, z_errored, limiting_number = align_pos(x_ideal, y_ideal, z_ideal, x_test, y_test, z_test, error_rate=0.3)
+        
+        
+        for i in range(z_ideal.shape[0]):
+            for j in range(z_ideal.shape[1]):
+                if y_ideal[i, j] == y_test_view[i, j]:
+                    print("Yes", i, j)
+                    print("x_ideal:", y_ideal[i, j])
+                    print("x_test:", y_test_view[i, j])
+                else:
+                    print("No", i, j)
+                    print("x_ideal:", y_ideal[i, j])
+                    print("x_test:", y_test_view[i, j])
+        
+    else:
+        print("Large object")
 
     # Plotting the point cloud of ideal object so that user can identify separately
     fig = plt.figure("Ideal Object")
@@ -78,20 +120,27 @@ def main():
     ax.scatter(x_ideal, y_ideal, z_ideal, c='b', marker='.')
 
     # Plotting the point cloud of test object so that user can identify separately
-    fig = plt.figure()
+    fig = plt.figure("Test Object")
     plt.title("Test Object")
     ax = fig.add_subplot(111, projection='3d')
     ax.scatter(x_test, y_test, z_test, c='r', marker='.')
 
     # Comparing both the point clouds
-    fig = plt.figure()
+    fig = plt.figure("Plot Comparison")
     plt.title("Ideal Object vs Test Object")
     ax = fig.add_subplot(111, projection='3d')
+    # ax.scatter(x_errored, y_errored, z_errored, c='g', marker='.')
     ax.scatter(x_ideal, y_ideal, z_ideal, c='b', marker='.')
     ax.scatter(x_test, y_test, z_test, c='r', marker='.')
 
     # Plotting all 3 in different windows
     plt.show()
-    
+
+
 if __name__ == "__main__":
     main()
+
+
+"""
+Map according to z-axis
+"""
