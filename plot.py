@@ -62,13 +62,10 @@ def get_plot_data(filename):
     return x, y, z
 
 
-def align_pos(x_ideal, y_ideal, z_ideal, x_test, y_test, z_test, error_rate):
+def align_pos(x_ideal, y_ideal, z_ideal, x_test, y_test, z_test):
     # Calculate the number of rows to add
     num_rows_to_add = z_ideal.shape[0] - z_test.shape[0]
     
-    # Allowing 30% error for checking as it is going to handle small objects
-    limiting_number = round(num_rows_to_add * error_rate) if round(num_rows_to_add * error_rate) >= 1 else 1
-
     # Extract the last `num_rows_to_add` rows from z_ideal
     z_errored = z_ideal[-num_rows_to_add:, :]
 
@@ -80,7 +77,7 @@ def align_pos(x_ideal, y_ideal, z_ideal, x_test, y_test, z_test, error_rate):
     x_test_view = np.vstack((x_test, nan_matrix))
     y_test_view = np.vstack((y_test, nan_matrix))
     
-    return x_test_view, y_test_view, z_errored, limiting_number
+    return x_test_view, y_test_view
 
 def main():
     # Get name of the files of which the defect is going to be tested upon
@@ -93,26 +90,37 @@ def main():
     
     x_errored = []
     y_errored = []
+    z_errored = []
 
-    if z_ideal.shape[0] > z_test.shape[0]:
+    errored_index_i = []
+    errored_index_j = []
+
+    if z_ideal.shape[0] >= z_test.shape[0]:
         # Align the shapes of Test Object and the Ideal Object
-        x_test_view, y_test_view, z_errored, limiting_number = align_pos(x_ideal, y_ideal, z_ideal, x_test, y_test, z_test, error_rate=0.3)
+        x_test_view, y_test_view = align_pos(x_ideal, y_ideal, z_ideal, x_test, y_test, z_test)
         
         
         for i in range(z_ideal.shape[0]):
             for j in range(z_ideal.shape[1]):
-                if y_ideal[i, j] == y_test_view[i, j]:
-                    print("Yes", i, j)
-                    print("x_ideal:", y_ideal[i, j])
-                    print("x_test:", y_test_view[i, j])
-                else:
-                    print("No", i, j)
-                    print("x_ideal:", y_ideal[i, j])
-                    print("x_test:", y_test_view[i, j])
-        
+                
+                if x_ideal[i, j] != x_test_view[i, j] or y_ideal[i, j] != y_test_view[i, j]:
+                    
+                    if np.isnan(x_ideal[i, j]) or np.isnan(y_ideal[i, j]):
+                        continue
+                    
+                    errored_index_i.append(i)
+                    errored_index_j.append(j)
+                    
+        x_errored = x_ideal[min(errored_index_i): max(errored_index_i) + 1, min(errored_index_j): max(errored_index_j) + 1]    
+        y_errored = y_ideal[min(errored_index_i): max(errored_index_i) + 1, min(errored_index_j): max(errored_index_j) + 1]
+        z_errored = z_ideal[min(errored_index_i): max(errored_index_i) + 1, min(errored_index_j): max(errored_index_j) + 1]
+
     else:
         print("Large object")
-
+    
+    print(x_errored)
+    print(x_ideal)
+    
     # Plotting the point cloud of ideal object so that user can identify separately
     fig = plt.figure("Ideal Object")
     plt.title("Ideal Object")
@@ -129,9 +137,16 @@ def main():
     fig = plt.figure("Plot Comparison")
     plt.title("Ideal Object vs Test Object")
     ax = fig.add_subplot(111, projection='3d')
-    # ax.scatter(x_errored, y_errored, z_errored, c='g', marker='.')
+    
     ax.scatter(x_ideal, y_ideal, z_ideal, c='b', marker='.')
     ax.scatter(x_test, y_test, z_test, c='r', marker='.')
+    
+    # Showing of the errored part 
+    fig = plt.figure("Corrections Needed")
+    plt.title("Error Plot")
+    ax = fig.add_subplot(111, projection='3d')    
+    ax.scatter(x_ideal[:min(errored_index_i),:], y_ideal[:min(errored_index_i),:], z_ideal[:min(errored_index_i),:], c='y', marker='.')
+    ax.scatter(x_errored, y_errored, z_errored, c='r', marker='.')
 
     # Plotting all 3 in different windows
     plt.show()
@@ -139,8 +154,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-"""
-Map according to z-axis
-"""
