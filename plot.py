@@ -99,7 +99,6 @@ def main():
         # Align the shapes of Test Object and the Ideal Object
         x_test_view, y_test_view = align_pos(x_ideal, y_ideal, z_ideal, x_test, y_test, z_test)
         
-        
         for i in range(z_ideal.shape[0]):
             for j in range(z_ideal.shape[1]):
                 
@@ -146,6 +145,7 @@ def main():
     plt.title("Error Plot")
     ax = fig.add_subplot(111, projection='3d')    
     ax.scatter(x_ideal[:min(errored_index_i),:], y_ideal[:min(errored_index_i),:], z_ideal[:min(errored_index_i),:], c='y', marker='.')
+    ax.scatter(x_ideal[min(errored_index_i) + 1:,:], y_ideal[min(errored_index_i) + 1:,:], z_ideal[min(errored_index_i) + 1:,:], c='y', marker='.')
     ax.scatter(x_errored, y_errored, z_errored, c='r', marker='.')
 
     # Plotting all 3 in different windows
