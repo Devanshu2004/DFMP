@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 
 def get_filename(required_data):
     if required_data == 'test_data':
-        return "farmers1.txt"
+        return "errored_farmer.txt"
     elif required_data == 'ideal_data':
-        return "farmer.TXT"
+        return "ideal_farmer.txt"
     else:
         sys.exit("Input request invalid: Please check the input for file name fetcher function call")
 
@@ -36,7 +36,7 @@ def get_plot_data(filename):
     r = centerDistance - r
 
     # Remove scan values greater than maxDistance and less than minDistance
-    maxDistance = 20
+    maxDistance = 12
     minDistance = 0
     r[(r > maxDistance) | (r < minDistance)] = np.nan
 
@@ -109,7 +109,10 @@ def main():
                     
                     errored_index_i.append(i)
                     errored_index_j.append(j)
-                    
+        
+        print(x_ideal, y_ideal, z_ideal)
+        print(x_errored, y_errored, z_errored)
+        
         x_errored = x_ideal[min(errored_index_i): max(errored_index_i) + 1, min(errored_index_j): max(errored_index_j) + 1]    
         y_errored = y_ideal[min(errored_index_i): max(errored_index_i) + 1, min(errored_index_j): max(errored_index_j) + 1]
         z_errored = z_ideal[min(errored_index_i): max(errored_index_i) + 1, min(errored_index_j): max(errored_index_j) + 1]
