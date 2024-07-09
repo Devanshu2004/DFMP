@@ -2,7 +2,7 @@
 
 // Define the pins for the ultrasonic sensor
 const int trigPin = 28;
-const int echoPin = 30;
+const int echoPin = 46;
 
 AF_Stepper motor1(200, 1);  // Create motor1 instance with 200 steps per revolution, connected to port 1
 AF_Stepper motor2(200, 2);  // Create motor2 instance with 200 steps per revolution, connected to port 2
@@ -36,30 +36,30 @@ double readUltrasonicSensor() {
 }
 
 void loop() {
-  // Move motor1 by 1 degree every second till 360 degrees
-  for (int i = 0; i < 45; i++) {
-    motor1.step(1, FORWARD, SINGLE);  // Move motor1 one step forward
+  for(int k = 0; k < 30; k ++) {
+    // Move motor1 by 1 degree every second till 360 degrees
+    for (int i = 0; i < 46; i++) {
+      motor1.step(1, FORWARD, SINGLE);  // Move motor1 one step forward
 
-    // Measure distance 20 times during each step of motor1
-    for (int j = 0; j < 20; j++) {
-      double distance = readUltrasonicSensor();  // Read and convert the distance from the ultrasonic sensor
+      // Measure distance 20 times during each step of motor1
+      for (int j = 0; j < 20; j++) {
+        double distance = readUltrasonicSensor();  // Read and convert the distance from the ultrasonic sensor
+        Serial.println(distance);
+      }
 
-      Serial.print("Step: ");
-      Serial.print(i);
-      Serial.print(", Measurement ");
-      Serial.print(j);
-      Serial.print(": ");
-      Serial.print(distance);
-      Serial.println(" cm");
+      delay(1000);  // Wait for 1 second
     }
 
-    delay(1000);  // Wait for 1 second
+    // Move motor2 by 1 degree every second till 360 degrees
+    for (int i = 0; i < 5; i++) {
+      motor2.step(1, BACKWARD, SINGLE);  // Move motor2 one step backward
+      delay(1000);                      // Wait for 1 second
+    }
   }
 
-  // Move motor2 by 1 degree every second till 360 degrees
-  for (int i = 0; i < 10; i++) {
-    motor2.step(1, FORWARD, SINGLE);  // Move motor2 one step forward
-    delay(1000);                      // Wait for 1 second
+  for (int i = 0; i < 60; i++) {
+    motor2.step(1, FORWARD, SINGLE);  // Move motor2 one step backward
+    delay(100);                      // Wait for 1 second
   }
 
   // Add any additional logic here if needed
